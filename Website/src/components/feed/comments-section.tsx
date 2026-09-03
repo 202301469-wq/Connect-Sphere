@@ -146,11 +146,6 @@ export function CommentsSection({ postId, currentUserId, onCommentCountChange }:
           text: newComment.trim(),
           parent_id: null,
         });
-      if (!error) {
-        // Increment the comment count on the parent post
-        await supabase.rpc('increment_comment_count', { post_id_input: postId });
-      }
-
       if (error) throw error;
 
       setNewComment("");
@@ -189,11 +184,6 @@ export function CommentsSection({ postId, currentUserId, onCommentCountChange }:
           text: replyText.trim(),
           parent_id: parentCommentId,
         });
-      if (!error) {
-        // Increment the comment count on the parent post
-        await supabase.rpc('increment_comment_count', { post_id_input: postId });
-      }
-
       if (error) throw error;
 
       setReplyText("");
@@ -226,23 +216,22 @@ export function CommentsSection({ postId, currentUserId, onCommentCountChange }:
     const supabase = createClient();
     try {
       if (hasLiked) {
-        // Unlike: Delete the row
-        await supabase
+        const { error } = await supabase
           .from('comment_likes')
           .delete()
           .eq('comment_id', commentId)
           .eq('user_id', currentUserId);
+        if (error) throw error;
       } else {
-        // Like: Insert a new row
-        await supabase
+        const { error } = await supabase
           .from('comment_likes')
           .insert({
             comment_id: commentId,
             user_id: currentUserId,
           });
+        if (error) throw error;
       }
 
-      // Refresh comments to update the counts and icons
       fetchComments();
 
     } catch (error) {

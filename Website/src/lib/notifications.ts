@@ -6,6 +6,7 @@ export type NotificationType =
   | "like"
   | "comment"
   | "follow"
+  | "follow_request"
   | "message"
   | "system";
 

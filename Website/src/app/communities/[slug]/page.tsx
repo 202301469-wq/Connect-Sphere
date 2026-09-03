@@ -58,7 +58,7 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
     .eq('community_id', community.id)
     .eq('user_id', user.id)
     .eq('status', 'active')
-    .single();
+    .maybeSingle();
 
   const isMember = !!membership;
   const memberRole = membership?.role || (community.owner_id === user.id ? 'owner' : null);

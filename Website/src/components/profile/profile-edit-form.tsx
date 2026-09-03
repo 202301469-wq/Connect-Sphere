@@ -55,9 +55,8 @@ export function ProfileEditForm({ user, onSave, onCancel }: ProfileEditFormProps
   const uploadAvatar = async (file: File): Promise<string> => {
     const supabase = createClient();
     const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+    const filePath = `${user.id}/${Date.now()}.${fileExt}`;
     const bucket = getBucketOrThrow('avatars');
-    const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from(bucket)

@@ -52,7 +52,7 @@ export function LoginForm() {
       // Ensure a profile row exists for this user (email/password flow doesn't hit the OAuth callback)
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).single();
+        const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).maybeSingle();
         if (!profile) {
             const sanitize = (value?: string | null) =>
               (value || "")

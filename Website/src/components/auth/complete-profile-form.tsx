@@ -76,13 +76,13 @@ export function CompleteProfileForm({
 
     try {
       // Check for existing username
-      const { data: existingUser, error: checkError } = await supabase
+      const { data: existingUser } = await supabase
         .from("profiles")
         .select("username")
         .eq("username", values.username)
-        .single();
+        .maybeSingle();
 
-      if (existingUser || !checkError) {
+      if (existingUser) {
         toast({
           variant: "destructive",
           title: "Username Taken",
@@ -95,7 +95,7 @@ export function CompleteProfileForm({
       // Check if profile exists
       const { data: existingProfile } = await supabase
         .from("profiles")
-        .select("id, username")
+        .select("id, username, avatar_url")
         .eq("id", userId)
         .single();
 

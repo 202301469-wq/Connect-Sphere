@@ -45,6 +45,7 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated }: CreatePostMo
   const [isSearchingCollab, setIsSearchingCollab] = useState(false);
   const [collabResults, setCollabResults] = useState<any[]>([]);
   const [selectedCollabs, setSelectedCollabs] = useState<any[]>([]);
+  const collabSearchTimer = useRef<ReturnType<typeof setTimeout>>();
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -63,16 +64,20 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated }: CreatePostMo
         .from('profiles')
         .select('id, username, display_name, avatar_url')
         .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
-        .neq('id', user?.id) // Don't find self
+        .neq('id', user?.id)
         .limit(5);
 
       if (!error && data) {
-        // Filter out already selected profiles
         setCollabResults(data.filter(p => !selectedCollabs.some(s => s.id === p.id)));
       }
     } finally {
       setIsSearchingCollab(false);
     }
+  };
+
+  const debouncedSearch = (q: string) => {
+    clearTimeout(collabSearchTimer.current);
+    collabSearchTimer.current = setTimeout(() => searchProfiles(q), 300);
   };
 
   const addCollab = (profile: any) => {
@@ -146,11 +151,25 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated }: CreatePostMo
     });
   };
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const UPLOAD_TIMEOUT_MS = 30000; // 30 seconds
+
   const uploadMedia = async (file: File) => {
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(`File "${file.name}" exceeds 10MB limit (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
     const bucket = getBucketOrThrow('media');
     const ext = file.name.split('.').pop();
-    const path = `posts/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from(bucket).upload(path, file);
+    const path = `${user.id}/posts/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+    const uploadPromise = supabase.storage.from(bucket).upload(path, file);
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`Upload timed out for "${file.name}". Check your connection and storage bucket.`)), UPLOAD_TIMEOUT_MS)
+    );
+
+    const { error } = await Promise.race([uploadPromise, timeoutPromise]);
     if (error) throw error;
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     return data.publicUrl;
@@ -288,7 +307,7 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated }: CreatePostMo
                 <Input
                   placeholder="Tag collaborators..."
                   value={collabQuery}
-                  onChange={(e) => { setCollabQuery(e.target.value); searchProfiles(e.target.value); }}
+                  onChange={(e) => { setCollabQuery(e.target.value); debouncedSearch(e.target.value); }}
                   className="h-8 text-sm border-none shadow-none focus-visible:ring-0 px-0"
                 />
                 {isSearchingCollab && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}

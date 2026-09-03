@@ -281,7 +281,7 @@ async function fetchReportStats(supabase: SupabaseClient<any>, userId: string): 
   const { count, error } = await supabase
     .from("user_reports")
     .select("id", { head: true, count: "exact" })
-    .eq("reported_user_id", userId);
+    .eq("reported_id", userId);
 
   if (error) {
     return {

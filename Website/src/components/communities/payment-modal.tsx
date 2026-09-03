@@ -171,7 +171,6 @@ export function PaymentModal({
 
       const razorpay = new window.Razorpay(options);
       razorpay.open();
-      setLoading(false);
     } catch (error: any) {
       console.error("Payment error:", error);
       toast({

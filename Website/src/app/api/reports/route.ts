@@ -27,7 +27,7 @@ class RequestError extends Error {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const {
     data: { user },
     error: authError,

@@ -28,13 +28,10 @@ export async function uploadStory(file: File, userId: string) {
     .getPublicUrl(filePath);
 
   if (!urlData.publicUrl) {
-    // Should not happen if the file was uploaded, but a safeguard
-    console.error("Public URL generation failed:", urlData);
+    // Clean up uploaded file if URL generation fails
+    await supabase.storage.from(STORY_BUCKET).remove([filePath]);
     throw new Error("Could not generate public URL for story media.");
   }
-
-  // DEBUGGING STEP: Log the URL you are about to save
-  console.log("Final Story URL to be inserted into DB:", urlData.publicUrl);
 
   // 3. Insert record into the 'stories' table
   const { data: story, error: dbError } = await supabase
@@ -43,14 +40,16 @@ export async function uploadStory(file: File, userId: string) {
       {
         user_id: userId,
         media_url: urlData.publicUrl,
-        expires_at: expiresAt, // Set expiration time for DB filtering
+        media_type: file.type.startsWith("video/") ? "video" : "image",
+        expires_at: expiresAt,
       },
     ])
     .select()
     .single();
 
   if (dbError) {
-    // Optionally: Implement logic to delete the file from storage if the DB insert fails
+    // Clean up uploaded file if DB insert fails
+    await supabase.storage.from(STORY_BUCKET).remove([filePath]);
     throw new Error(`DB insert failed: ${dbError.message}`);
   }
 

@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client"
 
 import Image from "next/image";
@@ -10,14 +9,12 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { formatDistanceToNow } from "date-fns";
 import { useState, useEffect } from "react";
 import type { Post } from "@/lib/types";
-import { Input } from "../ui/input";
 import { EngagementActions } from "./engagement-actions";
 import { CommentsSection } from "@/components/feed/comments-section";
-import placeholderData from "@/lib/placeholder-data";
 import { createClient } from "@/lib/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useRouter } from "next/navigation";
-import { Archive, Trash2, UserX, Loader2 } from "lucide-react";
+import { Archive, Trash2, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,12 +24,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
-export function PostCard({ post }: { post: Post }) {
+export function PostCard({ post, currentUserId }: { post: Post; currentUserId?: string }) {
   const [timeAgo, setTimeAgo] = useState<string | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | undefined>();
   const [showComments, setShowComments] = useState(false);
   const [collabProfiles, setCollabProfiles] = useState<any[]>([]);
-  const profile = placeholderData.users[0];
   const [isProcessing, setIsProcessing] = useState(false);
   const [isArchived, setIsArchived] = useState(post.is_archived || false);
   const [isDeleted, setIsDeleted] = useState(false);  
@@ -51,9 +46,6 @@ export function PostCard({ post }: { post: Post }) {
   }, [post.created_at]);
 
   useEffect(() => {
-    //const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id));
-
     const fetchCollabs = async () => {
       if (!Array.isArray(post.collaborators)) {
         setCollabProfiles([]);

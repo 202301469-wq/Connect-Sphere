@@ -22,7 +22,7 @@ type RawBan = {
 };
 
 async function getModeratorContext() {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const {
     data: { user },
     error: authError,

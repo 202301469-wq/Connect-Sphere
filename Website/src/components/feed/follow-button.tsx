@@ -118,6 +118,17 @@ export function FollowButton({
                 following_id: targetUserId,
               });
             if (error) throw error;
+
+            await supabase.from("notifications").insert({
+              user_id: targetUserId,
+              actor_id: currentUserId,
+              type: "follow_request",
+              title: "sent you a follow request",
+              body: null,
+              metadata: { request_type: "follow_request" },
+              is_read: false,
+            });
+
             setFollowStatus({ isFollowing: false, status: "pending" });
             setTimeout(() => onFollowChange?.(false, "pending"), 400);
             toast({ title: "Follow request sent" });

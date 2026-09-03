@@ -11,7 +11,7 @@ import { ArchivedPostList } from "@/components/settings/archived-posts-list-ui";
 import { DeleteAccountDialog } from "@/components/settings/delete-account-dialog";
 
 export default async function SettingsPage() {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   const { data: { user } } = await supabase.auth.getUser();
 

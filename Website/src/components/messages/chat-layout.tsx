@@ -576,8 +576,7 @@ export function ChatLayout() {
       if (!user) throw new Error("Unauthorized");
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      const filePath = `chat-images/${fileName}`;
+      const filePath = `${user.id}/chat-images/${Date.now()}.${fileExt}`;
 
       const { data, error } = await supabase.storage
         .from('media')
@@ -788,24 +787,6 @@ export function ChatLayout() {
       
       const supabase = createClient();
       const channel = supabase.channel(`messages-conv-${selectedConversation.id}`)
-        .on('postgres_changes', { 
-            event: 'INSERT', 
-            schema: 'public', 
-            table: 'messages', 
-            filter: `conversation_id=eq.${selectedConversation.id}` 
-          }, 
-          async (payload) => {
-             // Instead of fetching all messages, just add the new one.
-             const { data: newMessage, error } = await supabase
-                .from("messages")
-                .select("*, sender:profiles!messages_sender_fkey(*)")
-                .eq("id", (payload.new as any).id)
-                .single();
-            if (!error && newMessage) {
-               setMessages(prev => [...prev, newMessage as Message]);
-            }
-          }
-        )
         .on('postgres_changes', {
             event: 'UPDATE',
             schema: 'public',

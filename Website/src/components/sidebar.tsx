@@ -64,12 +64,14 @@ export function Sidebar({ isSheet = false }: { isSheet?: boolean }) {
 
   return (
     <aside className={cn(
-        "fixed inset-y-0 left-0 z-40 flex-col bg-sidebar text-sidebar-foreground",
-        isSheet ? "w-full" : "hidden w-72 lg:flex"
+        "flex-col bg-sidebar text-sidebar-foreground",
+        isSheet
+          ? "relative h-full w-full"
+          : "fixed inset-y-0 left-0 z-40 hidden w-72 lg:flex"
     )}>
       <div className="flex h-full flex-col p-4">
         <div className="flex items-center p-4">
-          <BrandLogo size="md" />
+          <Link href="/feed"><BrandLogo size="md" /></Link>
         </div>
         
         <nav className="flex flex-col gap-1 p-2">

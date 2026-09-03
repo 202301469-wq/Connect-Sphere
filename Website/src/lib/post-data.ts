@@ -1,7 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 
 export async function archivePost(postId: number) {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -20,7 +20,7 @@ export async function archivePost(postId: number) {
 }
 
 export async function unarchivePost(postId: number) {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -39,7 +39,7 @@ export async function unarchivePost(postId: number) {
 }
 
 export async function fetchArchivedPosts() {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   
   const { data: { user } } = await supabase.auth.getUser();
 

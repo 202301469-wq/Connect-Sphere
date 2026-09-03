@@ -42,13 +42,14 @@ export function SignupForm() {
     const supabase = createClient();
     
     // Check for existing username
-    const { data: existingUser, error: checkError } = await supabase
+    const { data: existingUser } = await supabase
       .from('profiles')
       .select('username')
       .eq('username', values.username)
-      .single();
+      .maybeSingle();
     
-    if (existingUser || !checkError) {
+    // .single() returns error PGRST116 when no row found — that means username is available
+    if (existingUser) {
       toast({
         variant: "destructive",
         title: "Username Taken",

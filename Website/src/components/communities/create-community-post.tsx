@@ -72,7 +72,7 @@ export function CreateCommunityPost({ communityId, canPost = false, userProfile 
         .eq('community_id', communityId)
         .eq('user_id', user.id)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
       if (!membership || (membership.role !== 'owner' && membership.role !== 'co_owner')) {
         toast({
@@ -89,7 +89,7 @@ export function CreateCommunityPost({ communityId, canPost = false, userProfile 
         const bucket = getBucketOrThrow('media');
         const uploads = await Promise.all(mediaFiles.map(async (mf) => {
           const ext = mf.file.name.split('.').pop();
-          const path = `community-posts/${communityId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+          const path = `${user.id}/community-posts/${communityId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
           const { error } = await supabase.storage.from(bucket).upload(path, mf.file);
           if (error) throw error;
           const { data } = supabase.storage.from(bucket).getPublicUrl(path);

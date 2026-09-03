@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     // Check Razorpay configuration first
     const razorpayInstance = getRazorpayInstance();
 
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       .eq('community_id', communityId)
       .eq('user_id', user.id)
       .eq('status', 'active')
-      .single();
+      .maybeSingle();
 
     if (existingMember) {
       return NextResponse.json({ 

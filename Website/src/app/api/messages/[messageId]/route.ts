@@ -124,7 +124,7 @@ async function deleteForEveryone(
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: { messageId: string } }) {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const {
     data: { user },
     error: authError,

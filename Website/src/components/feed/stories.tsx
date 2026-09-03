@@ -11,7 +11,7 @@ import { StoriesReactions } from "./stories-reactions";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import type { Story, UserProfile } from "@/lib/types";
-import { fetchActiveStories } from '@/lib/supabase/story-fetch';
+import { fetchActiveStories, type StoryGroup } from '@/lib/supabase/story-fetch';
 import { StoryUploadForm } from '@/components/stories/StoryUploadForm';
 
 export function Stories() {
@@ -161,15 +161,10 @@ export function Stories() {
                     className={`h-16 w-16 border-2 border-primary cursor-pointer`}
                     onClick={() => handleStoryClick(stories[0].stories[0])}
                   >
-                    {/* Defensive Check: Ensure profile and avatar_url exist */}
-                    {stories[0].profile && stories[0].profile.avatar_url ? (
-                      <AvatarImage src={stories[0].profile.avatar_url} alt="Your Story" />
-                    ) : (
-                      // Fallback for avatar image
-                      <AvatarFallback>
-                        {stories[0].profile?.display_name?.charAt(0) || "U"}
-                      </AvatarFallback>
-                    )}
+                    <AvatarImage src={stories[0].profile?.avatar_url ?? undefined} alt="Your Story" />
+                    <AvatarFallback className="bg-primary/20 text-primary font-semibold">
+                      {stories[0].profile?.display_name?.charAt(0) || "U"}
+                    </AvatarFallback>
                   </Avatar>
                   <p className="text-xs text-center mt-1 font-medium">Your Story</p>
                 </div>
@@ -201,12 +196,10 @@ export function Stories() {
                         className={`h-16 w-16 border-2 cursor-pointer ${getStoryBorderColor(group.stories[0])}`}
                         onClick={() => handleStoryClick(group.stories[0])}
                       >
-                        {/* Defensive Check: Ensure avatar_url exists */}
-                        {group.profile.avatar_url ? (
-                          <AvatarImage src={group.profile.avatar_url} alt={group.profile.display_name} />
-                        ) : (
-                          <AvatarFallback>{group.profile.display_name?.charAt(0)||"U"}</AvatarFallback>
-                        )}
+                        <AvatarImage src={group.profile.avatar_url ?? undefined} alt={group.profile.display_name} />
+                        <AvatarFallback className="bg-primary/20 text-primary font-semibold">
+                          {group.profile.display_name?.charAt(0) || "U"}
+                        </AvatarFallback>
                       </Avatar>
                     </div>
                     <p className="text-xs text-center mt-1 truncate w-16">
@@ -227,7 +220,7 @@ export function Stories() {
       </Card>
 
       {/* Story Viewer Modal */}
-      <Dialog open={!!selectedStory} onOpenChange={setSelectedStory}>
+      <Dialog open={!!selectedStory} onOpenChange={(open) => !open && setSelectedStory(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <div className="flex items-center justify-between w-full">
@@ -236,10 +229,12 @@ export function Stories() {
                 {selectedStory?.author && (
                   <Avatar className="h-6 w-6">
                     <AvatarImage
-                      src={selectedStory.author.avatar_url ?? 'DEFAULT_URL'}
+                      src={selectedStory.author.avatar_url ?? undefined}
                       alt={selectedStory.author.display_name}
                     />
-                    <AvatarFallback>{selectedStory.author.display_name?.charAt(0) ?? 'U'}</AvatarFallback>
+                    <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                      {selectedStory.author.display_name?.charAt(0) ?? 'U'}
+                    </AvatarFallback>
                   </Avatar>
                 )}
                 <span className="font-semibold">{selectedStory?.author?.display_name}</span>

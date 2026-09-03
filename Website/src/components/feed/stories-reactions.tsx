@@ -46,7 +46,7 @@ export function StoriesReactions({ story, currentUserId, onReactionChange }: Sto
         .select('*')
         .eq('story_id', story.id)
         .eq('user_id', currentUserId)
-        .single();
+        .maybeSingle();
 
       setUserReaction(data);
     } catch {
@@ -115,7 +115,9 @@ export function StoriesReactions({ story, currentUserId, onReactionChange }: Sto
               reaction_type: reactionType,
             },
             { onConflict: ['story_id', 'user_id'] }
-          );
+          )
+          .select()
+          .single();
 
         if (error) throw error;
 
@@ -126,8 +128,7 @@ export function StoriesReactions({ story, currentUserId, onReactionChange }: Sto
         newCounts[reactionType] = (newCounts[reactionType] || 0) + 1;
 
         setReactionCounts(newCounts);
-        setUserReaction(
-          data && data[0] ? data[0] : {
+        setUserReaction(data || {
             id: 0,
             story_id: story.id,
             user_id: currentUserId,

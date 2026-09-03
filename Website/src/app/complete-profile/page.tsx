@@ -32,7 +32,7 @@ export default async function CompleteProfilePage() {
     .from("profiles")
     .select("username")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   if (profile?.username) {
     // Profile is already complete

@@ -21,6 +21,7 @@ const notifyUnreadRefresh = () => {
 export function NotificationItem({ item }: Readonly<{ item: Notification }>) {
   const [isRead, setIsRead] = useState(item.is_read);
   const [status, setStatus] = useState<'pending' | 'accepted' | 'declined'>('pending');
+  const [followStatus, setFollowStatus] = useState<'pending' | 'accepted' | 'declined'>('pending');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const supabase = createClient();
@@ -34,8 +35,9 @@ export function NotificationItem({ item }: Readonly<{ item: Notification }>) {
     notifyUnreadRefresh();
   };
 
-  // Check if this is a collaboration invite
+  // Check if this is a collaboration invite or follow request
   const isCollab = !!item.metadata?.invite_id;
+  const isFollowRequest = item.type === "follow_request" && item.metadata?.request_type === "follow_request";
 
   useEffect(() => {
     setIsRead(item.is_read);
@@ -44,20 +46,35 @@ export function NotificationItem({ item }: Readonly<{ item: Notification }>) {
   const handleAction = async (action: 'accept' | 'decline') => {
     setIsLoading(true);
     try {
-      const rpc = action === 'accept' ? 'accept_collab_invite' : 'decline_collab_invite';
-      const { error } = await supabase.rpc(rpc, { invite_id: item.metadata?.invite_id });
-      
-      if (error) throw error;
-      
-      setStatus(action === 'accept' ? 'accepted' : 'declined');
-      toast({ title: action === 'accept' ? "Invitation accepted" : "Invitation declined" });
-      onMarkRead(); // Mark as read after acting on it
+      if (isCollab) {
+        const rpc = action === 'accept' ? 'accept_collab_invite' : 'decline_collab_invite';
+        const { error } = await supabase.rpc(rpc, { invite_id: item.metadata?.invite_id });
+        if (error) throw error;
+        setStatus(action === 'accept' ? 'accepted' : 'declined');
+        toast({ title: action === 'accept' ? "Invitation accepted" : "Invitation declined" });
+      } else if (isFollowRequest) {
+        if (action === 'accept') {
+          const { error: insertError } = await supabase
+            .from('followers')
+            .insert({ follower_id: item.actor_id, following_id: item.user_id });
+          if (insertError) throw insertError;
+        }
+        const { error: deleteError } = await supabase
+          .from('follow_requests')
+          .delete()
+          .eq('follower_id', item.actor_id)
+          .eq('following_id', item.user_id);
+        if (deleteError) throw deleteError;
+        setFollowStatus(action === 'accept' ? 'accepted' : 'declined');
+        toast({ title: action === 'accept' ? "Follow request accepted" : "Follow request declined" });
+      }
+      onMarkRead();
     } catch (error: any) {
-      console.error("RPC Error:", error);
-      toast({ 
-        title: "Action failed", 
+      console.error("Action Error:", error);
+      toast({
+        title: "Action failed",
         description: error.message || "Please try again.",
-        variant: "destructive" 
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -76,7 +93,7 @@ export function NotificationItem({ item }: Readonly<{ item: Notification }>) {
             <span className="font-semibold">{actorName}</span>{" "}
             <span className="text-muted-foreground">{item.title}</span>
           </div>
-          {!isRead && !isCollab && (
+          {!isRead && !isCollab && !isFollowRequest && (
             <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={onMarkRead} title="Mark as read">
                <div className="h-2 w-2 bg-blue-500 rounded-full" />
                <span className="sr-only">Mark as read</span>
@@ -97,11 +114,31 @@ export function NotificationItem({ item }: Readonly<{ item: Notification }>) {
           </div>
         )}
 
+        {/* Follow Request Buttons: Show if pending */}
+        {isFollowRequest && followStatus === 'pending' && (
+          <div className="flex gap-2 mt-2">
+            <Button size="sm" className="h-7 px-3" onClick={() => handleAction('accept')} disabled={isLoading}>
+              {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Check className="h-3 w-3 mr-1" /> Accept</>}
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 px-3" onClick={() => handleAction('decline')} disabled={isLoading}>
+              <X className="h-3 w-3 mr-1" /> Decline
+            </Button>
+          </div>
+        )}
+
         {/* Collab Status AFTER acting */}
         {isCollab && status !== 'pending' && (
           <div className={`text-xs mt-2 flex items-center font-medium ${status === 'accepted' ? 'text-green-600' : 'text-red-600'}`}>
             {status === 'accepted' ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
             {status === 'accepted' ? 'Accepted' : 'Declined'}
+          </div>
+        )}
+
+        {/* Follow Request Status AFTER acting */}
+        {isFollowRequest && followStatus !== 'pending' && (
+          <div className={`text-xs mt-2 flex items-center font-medium ${followStatus === 'accepted' ? 'text-green-600' : 'text-red-600'}`}>
+            {followStatus === 'accepted' ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
+            {followStatus === 'accepted' ? 'Accepted' : 'Declined'}
           </div>
         )}
 

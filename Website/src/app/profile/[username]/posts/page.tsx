@@ -10,14 +10,14 @@ export const dynamic = "force-dynamic";
 
 // Define the structure for URL search parameters (query params)
 interface UserPostsPageProps {
-  params: { username: string };
-  searchParams: { postId?: string };
+  params: Promise<{ username: string }>;
+  searchParams: Promise<{ postId?: string }>;
 }
 
 export default async function UserPostsPage({ params, searchParams }: UserPostsPageProps) {
-  const supabase = createServerClient();
-  const { username } = params;
-  const targetPostId = searchParams.postId; // Get the ID of the post to scroll to
+  const supabase = await createServerClient();
+  const { username } = await params;
+  const { postId: targetPostId } = await searchParams;
 
   const { data: { user: currentUser } } = await supabase.auth.getUser();
 
@@ -45,11 +45,10 @@ export default async function UserPostsPage({ params, searchParams }: UserPostsP
   if (currentUser && !isOwner) {
     const { data: follow } = await supabase
       .from("followers")
-      .select("status")
+      .select("follower_id")
       .eq("follower_id", currentUser.id)
       .eq("following_id", profile.id)
-      .eq("status", "accepted")
-      .single();
+      .maybeSingle();
     isFollowing = !!follow;
   }
 
@@ -83,7 +82,7 @@ export default async function UserPostsPage({ params, searchParams }: UserPostsP
           posts.map((post) => (
             // Use the post ID as a unique HTML anchor ID for scrolling
             <div id={`post-${post.id}`} key={post.id}>
-              <PostCard post={post} />
+              <PostCard post={post} currentUserId={currentUser?.id} />
             </div>
           ))
         ) : (

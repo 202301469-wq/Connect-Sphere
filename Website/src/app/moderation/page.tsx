@@ -1,8 +1,23 @@
 import { Suspense } from "react";
 import { ModeratorDashboard } from "@/components/moderation/moderator-dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { createServerClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
-export default function ModerationPage() {
+export default async function ModerationPage() {
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_moderator")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile?.is_moderator) redirect("/feed");
+
   return (
     <div className="space-y-6">
       <div>

@@ -41,33 +41,38 @@ export function FeedList({ initialPosts, currentUserId }: FeedListProps) {
 
     const fetchMore = async () => {
       setIsLoadingMore(true);
-      const supabase = createClient();
-      const from = page * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
+      try {
+        const supabase = createClient();
+        const from = page * PAGE_SIZE;
+        const to = from + PAGE_SIZE - 1;
 
-      const { data, error } = await supabase
-        .rpc('get_home_feed', { current_user_id: currentUserId })
-        .select('*, author:profiles(*)')
-        .eq("is_archived", false)
-        .range(from, to);
+        const { data, error } = await supabase
+          .rpc('get_home_feed', { current_user_id: currentUserId })
+          .select('*, author:profiles(*)')
+          .eq("is_archived", false)
+          .range(from, to);
 
-      if (error) {
-        console.error("Error fetching more posts:", error);
-      } else if (data) {
-        const newPosts = data as Post[];
-        
-        if (newPosts.length < PAGE_SIZE) {
-          setHasMore(false);
+        if (error) {
+          console.error("Error fetching more posts:", error);
+        } else if (data) {
+          const newPosts = data as Post[];
+          
+          if (newPosts.length < PAGE_SIZE) {
+            setHasMore(false);
+          }
+
+          setPosts(prev => {
+            const existingIds = new Set(prev.map(p => p.id));
+            const uniqueNewPosts = newPosts.filter(p => !existingIds.has(p.id));
+            return [...prev, ...uniqueNewPosts];
+          });
         }
-
-        // Deduplicate posts (in case a new post shifted the offset)
-        setPosts(prev => {
-          const existingIds = new Set(prev.map(p => p.id));
-          const uniqueNewPosts = newPosts.filter(p => !existingIds.has(p.id));
-          return [...prev, ...uniqueNewPosts];
-        });
+      } catch (err) {
+        console.error("Unexpected error fetching posts:", err);
+        setHasMore(false);
+      } finally {
+        setIsLoadingMore(false);
       }
-      setIsLoadingMore(false);
     };
 
     fetchMore();

@@ -18,7 +18,7 @@ type ProfilePageProps = Readonly<{
 }>;
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { username } = await params;
 
   const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -174,7 +174,7 @@ async function checkIfFollowing(
     .select("follower_id")
     .eq("follower_id", currentUserId)
     .eq("following_id", profileId)
-    .single();
+    .maybeSingle();
 
   return Boolean(data);
 }

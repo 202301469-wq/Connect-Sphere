@@ -53,6 +53,7 @@ export type Post = {
   save_count?: number;
   comment_count?: number;
   collaborators?: PostCollaborator[];
+  is_archived?: boolean;
 };
 
 export type Comment = {

@@ -30,7 +30,7 @@ export default async function CommunityMembersPage({ params }: { params: { slug:
     .select('role, status')
     .eq('community_id', community.id)
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
 
   const { data: members } = await supabase
     .from('community_members')

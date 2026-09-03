@@ -6,7 +6,7 @@ import type { ReportStatus } from "@/lib/types";
 const REPORT_STATUSES: Set<ReportStatus> = new Set(["pending", "under_review", "action_taken", "dismissed"]);
 
 async function getModeratorContext() {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const {
     data: { user },
     error: authError,

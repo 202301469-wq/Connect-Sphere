@@ -3,7 +3,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { BannedNotice } from "@/components/banned-notice";
 
 export default async function BannedPage() {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

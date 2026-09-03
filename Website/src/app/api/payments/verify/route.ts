@@ -4,7 +4,7 @@ import { createServerClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -26,7 +26,10 @@ export async function POST(request: NextRequest) {
       .update(text)
       .digest('hex');
 
-    if (generated_signature !== razorpay_signature) {
+    // Use timing-safe comparison to prevent timing attacks
+    const generated_buffer = Buffer.from(generated_signature);
+    const received_buffer = Buffer.from(razorpay_signature);
+    if (generated_buffer.length !== received_buffer.length || !crypto.timingSafeEqual(generated_buffer, received_buffer)) {
       return NextResponse.json({ error: 'Invalid payment signature' }, { status: 400 });
     }
 
@@ -47,7 +50,7 @@ export async function POST(request: NextRequest) {
       .select('*')
       .eq('community_id', communityId)
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (existingMember) {
       // Update existing membership

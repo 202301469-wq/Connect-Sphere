@@ -34,7 +34,7 @@ interface AnalyticsData {
 }
 
 async function fetchCommunityEarnings(userId: string): Promise<{ totalEarnings: number; earningsData: EarningsData[] }> {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   // First, get all communities owned by this user with their prices
   const { data: communities, error: communitiesError } = await supabase
@@ -118,7 +118,7 @@ async function fetchCommunityEarnings(userId: string): Promise<{ totalEarnings: 
 }
 
 async function fetchUserAnalytics(userId: string): Promise<AnalyticsData> {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   // Fetch follower count
   const { data: profile } = await supabase
@@ -256,7 +256,7 @@ function formatDate(dateString: string | null): string {
 }
 
 export default async function AnalyticsPage() {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

@@ -1,24 +1,12 @@
 import { AppShell } from "@/components/app-shell";
 import { NotificationList } from "@/components/notifications/notification-list";
-import { createServerClient } from "@/lib/supabase/server"; // Use the server helper
-import { cookies } from "next/headers";
+import { createServerClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import CollabInvites from "@/components/notifications/collab-invites";
 import { FollowRequests } from "@/components/feed/follow-requests";
 
 export default async function NotificationsPage() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-      },
-    }
-  );
+  const supabase = await createServerClient();
 
   const { data: { user } } = await supabase.auth.getUser();
 

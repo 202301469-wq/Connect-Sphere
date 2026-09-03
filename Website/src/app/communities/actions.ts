@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 
 export async function createCommunity(formData: FormData) {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -53,7 +53,7 @@ export async function createCommunity(formData: FormData) {
     .from('communities')
     .select('id')
     .eq('slug', slug)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     return { error: 'A community with this name already exists' };
@@ -101,7 +101,7 @@ export async function createCommunity(formData: FormData) {
 }
 
 export async function joinCommunity(communityId: number) {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -125,7 +125,7 @@ export async function joinCommunity(communityId: number) {
     .select('*')
     .eq('community_id', communityId)
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
 
   if (existingMember) {
     if (existingMember.status === 'active') {
@@ -181,7 +181,7 @@ export async function joinCommunity(communityId: number) {
 }
 
 export async function leaveCommunity(communityId: number) {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -221,7 +221,7 @@ export async function removeCommunityMember(
   communityId: number,
   targetUserId: string
 ) {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const admin = createAdminClient();
 
   const {
@@ -304,7 +304,7 @@ export async function removeCommunityMember(
 }
 
 export async function deleteCommunity(communityId: number) {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -344,7 +344,7 @@ export async function updateMemberRole(
   targetUserId: string,
   role: 'member' | 'co_owner'
 ) {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const admin = createAdminClient();
 
   const {
